@@ -58,47 +58,45 @@ class Dealer(Base):
 class Booking(Base):
     """
     Royal Enfield Customer Booking — single-row lifecycle model.
-
-    One row per booking_id. Kissflow sends partial payloads at each
-    phase; the API inserts on first call and patches only the provided
-    fields on every subsequent call.
-
-    Phases
-    ──────
-    1. Initial Booking  → booking_id, customer_name, email, city,
-                          interested_model, finance_required
-    2. Finance          → preferred_bank, loan_amount, loan_status
-    3. Vehicle Alloc.   → vehicle_available, chassis_number, engine_number
-    4. Delivery         → delivery_status, registration_status,
-                          insurance_status
+    Columns match the actual Neon DB table (verified via /booking/debug).
     """
     __tablename__ = "bookings"
 
-    # ── Identity ─────────────────────────────────────────────────────
+    # ── Identity ──────────────────────────────────────────────────────
     booking_id       = Column(String(50),  primary_key=True, index=True)
+    request_id       = Column(String(100), nullable=True)   # Kissflow request ID
 
-    # ── Phase 1 : Initial Booking ─────────────────────────────────────
+    # ── Phase 1 : Initial Booking ──────────────────────────────────────
     customer_name    = Column(String(150), nullable=True)
     email            = Column(String(150), nullable=True)
     city             = Column(String(100), nullable=True)
     interested_model = Column(String(100), nullable=True)
+    variant          = Column(String(100), nullable=True)
+    on_road_price    = Column(Float,       nullable=True)
+    booking_amount   = Column(Float,       nullable=True)
     finance_required = Column(String(10),  nullable=True)   # "Yes" / "No"
 
-    # ── Phase 2 : Finance ─────────────────────────────────────────────
+    # ── Phase 2 : Finance ──────────────────────────────────────────────
     preferred_bank   = Column(String(100), nullable=True)
+    down_payment     = Column(Float,       nullable=True)
     loan_amount      = Column(Float,       nullable=True)
-    loan_status      = Column(String(50),  nullable=True)   # Approved / Rejected / Pending
+    loan_tenure      = Column(String(50),  nullable=True)   # e.g. "36 months"
+    loan_status      = Column(String(50),  nullable=True)   # Approved / Rejected
 
-    # ── Phase 3 : Vehicle Allocation ──────────────────────────────────
+    # ── Phase 3 : Vehicle Allocation ───────────────────────────────────
     vehicle_available = Column(String(10),  nullable=True)  # "Yes" / "No"
     chassis_number    = Column(String(100), nullable=True)
     engine_number     = Column(String(100), nullable=True)
 
-    # ── Phase 4 : Delivery ────────────────────────────────────────────
+    # ── Phase 4 : Delivery ─────────────────────────────────────────────
     delivery_status     = Column(String(50), nullable=True)
     registration_status = Column(String(50), nullable=True)
     insurance_status    = Column(String(50), nullable=True)
 
-    # ── Timestamps ────────────────────────────────────────────────────
+    # ── Workflow ────────────────────────────────────────────────────────
+    workflow_stage   = Column(String(100), nullable=True)   # Current Kissflow stage
+
+    # ── Timestamps ─────────────────────────────────────────────────────
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+

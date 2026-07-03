@@ -83,20 +83,28 @@ class DealerResponse(DealerCreate):
 class BookingPayload(BaseModel):
     """
     Accepts any combination of fields from any Kissflow phase.
-    Only booking_id is always required; every other field is optional
-    so the same endpoint handles all 4 workflow stages.
+    Only booking_id is required — all other fields are optional.
+    Matches the actual Neon DB bookings table schema exactly.
     """
-    # Phase 1 – Initial Booking
+    # Identity
     booking_id:       str
+    request_id:       Optional[str]   = None   # Kissflow request ID
+
+    # Phase 1 – Initial Booking
     customer_name:    Optional[str]   = None
     email:            Optional[str]   = None
     city:             Optional[str]   = None
     interested_model: Optional[str]   = None
+    variant:          Optional[str]   = None
+    on_road_price:    Optional[float] = None
+    booking_amount:   Optional[float] = None
     finance_required: Optional[str]   = None
 
     # Phase 2 – Finance
     preferred_bank:   Optional[str]   = None
+    down_payment:     Optional[float] = None
     loan_amount:      Optional[float] = None
+    loan_tenure:      Optional[str]   = None
     loan_status:      Optional[str]   = None
 
     # Phase 3 – Vehicle Allocation
@@ -109,16 +117,25 @@ class BookingPayload(BaseModel):
     registration_status: Optional[str] = None
     insurance_status:    Optional[str] = None
 
+    # Workflow
+    workflow_stage:      Optional[str] = None
+
 
 class BookingResponse(BaseModel):
     booking_id:          str
+    request_id:          Optional[str]   = None
     customer_name:       Optional[str]   = None
     email:               Optional[str]   = None
     city:                Optional[str]   = None
     interested_model:    Optional[str]   = None
+    variant:             Optional[str]   = None
+    on_road_price:       Optional[float] = None
+    booking_amount:      Optional[float] = None
     finance_required:    Optional[str]   = None
     preferred_bank:      Optional[str]   = None
+    down_payment:        Optional[float] = None
     loan_amount:         Optional[float] = None
+    loan_tenure:         Optional[str]   = None
     loan_status:         Optional[str]   = None
     vehicle_available:   Optional[str]   = None
     chassis_number:      Optional[str]   = None
@@ -126,9 +143,11 @@ class BookingResponse(BaseModel):
     delivery_status:     Optional[str]   = None
     registration_status: Optional[str]   = None
     insurance_status:    Optional[str]   = None
+    workflow_stage:      Optional[str]   = None
 
     class Config:
         from_attributes = True
+
 
 
 # ─────────────────────────────────────────────
