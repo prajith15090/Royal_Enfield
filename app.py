@@ -225,48 +225,78 @@ def save_booking(payload: BookingPayload, db: Session = Depends(get_db)):
     - **Subsequent calls** (booking_id exists) → UPDATE *only* the
       fields present in this payload; existing data is never overwritten
       with NULL.
-
-    Kissflow can send partial payloads in any order:
-    ```
-    Phase 1 → customer info
-    Phase 2 → finance details
-    Phase 3 → vehicle allocation
-    Phase 4 → delivery status
-    ```
-    All four updates land in **one single row** identified by booking_id.
     """
-    # Extract only the fields that were actually sent (exclude booking_id itself)
-    incoming = payload.model_dump(exclude_unset=True)
-    incoming.pop("booking_id", None)
+    try:
+        # Extract only the fields that were actually sent (exclude booking_id itself)
+        incoming = payload.model_dump(exclude_unset=True)
+        incoming.pop("booking_id", None)
 
-    existing = db.query(Booking).filter(
-        Booking.booking_id == payload.booking_id
-    ).first()
+        existing = db.query(Booking).filter(
+            Booking.booking_id == payload.booking_id
+        ).first()
 
-    if existing is None:
-        # ── INSERT ──────────────────────────────────────────────────
-        new_booking = Booking(
-            booking_id=payload.booking_id,
-            **incoming
+        if existing is None:
+            # ── INSERT ──────────────────────────────────────────────────
+            new_booking = Booking(
+                booking_id=payload.booking_id,
+                **incoming
+            )
+            db.add(new_booking)
+            db.commit()
+            db.refresh(new_booking)
+            return new_booking
+        else:
+            # ── PATCH (only non-null incoming fields) ────────────────────
+            for field, value in incoming.items():
+                if value is not None:          # never overwrite existing data with NULL
+                    setattr(existing, field, value)
+            db.commit()
+            db.refresh(existing)
+            return existing
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": str(e),
+                "type": type(e).__name__,
+                "received_payload": payload.model_dump(exclude_unset=True)
+            }
         )
-        db.add(new_booking)
-        db.commit()
-        db.refresh(new_booking)
-        return new_booking
-    else:
-        # ── PATCH (only non-null incoming fields) ────────────────────
-        for field, value in incoming.items():
-            if value is not None:          # never overwrite existing data with NULL
-                setattr(existing, field, value)
-        db.commit()
-        db.refresh(existing)
-        return existing
 
 
 @app.get("/booking", response_model=List[BookingResponse], tags=["Bookings"])
 def get_all_bookings(db: Session = Depends(get_db)):
     """List every booking with its current lifecycle state."""
     return db.query(Booking).all()
+
+
+@app.get("/booking/debug", tags=["Bookings"])
+def debug_booking_table(db: Session = Depends(get_db)):
+    """
+    Debug endpoint — returns the actual columns that exist in the
+    bookings table in the Neon database. Use this to verify the
+    schema matches the model.
+    """
+    from sqlalchemy import text, inspect
+    try:
+        inspector = inspect(db.bind)
+        columns = inspector.get_columns("bookings")
+        return {
+            "table_exists": True,
+            "columns": [c["name"] for c in columns],
+            "expected_columns": [
+                "booking_id", "customer_name", "email", "city",
+                "interested_model", "finance_required",
+                "preferred_bank", "loan_amount", "loan_status",
+                "vehicle_available", "chassis_number", "engine_number",
+                "delivery_status", "registration_status", "insurance_status",
+                "created_at", "updated_at"
+            ]
+        }
+    except Exception as e:
+        return {"table_exists": False, "error": str(e)}
 
 
 @app.get("/booking/{booking_id}", response_model=BookingResponse, tags=["Bookings"])
