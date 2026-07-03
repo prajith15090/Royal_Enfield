@@ -275,11 +275,10 @@ def get_all_bookings(db: Session = Depends(get_db)):
 @app.get("/booking/debug", tags=["Bookings"])
 def debug_booking_table(db: Session = Depends(get_db)):
     """
-    Debug endpoint — returns the actual columns that exist in the
-    bookings table in the Neon database. Use this to verify the
-    schema matches the model.
+    Debug endpoint — returns actual columns in the bookings table.
+    Must be defined BEFORE /booking/{booking_id} to avoid route shadowing.
     """
-    from sqlalchemy import text, inspect
+    from sqlalchemy import inspect
     try:
         inspector = inspect(db.bind)
         columns = inspector.get_columns("bookings")
