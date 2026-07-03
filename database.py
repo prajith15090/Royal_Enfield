@@ -37,3 +37,27 @@ def init_db():
     from models import Base
     Base.metadata.create_all(bind=engine)
     print("[OK] Database tables created successfully.")
+
+
+def run_migrations():
+    """
+    ALTER existing columns that are too small.
+    SQLAlchemy create_all() never modifies existing columns,
+    so we run raw SQL to fix column sizes in the live Neon DB.
+    """
+    from sqlalchemy import text
+    migrations = [
+        # Fix VARCHAR(10) columns that are too small for real values
+        "ALTER TABLE bookings ALTER COLUMN finance_required TYPE VARCHAR(50)",
+        "ALTER TABLE bookings ALTER COLUMN vehicle_available TYPE VARCHAR(50)",
+    ]
+    with engine.connect() as conn:
+        for sql in migrations:
+            try:
+                conn.execute(text(sql))
+                print(f"[OK] Migration applied: {sql}")
+            except Exception as e:
+                print(f"[SKIP] Migration skipped (already applied or error): {e}")
+        conn.commit()
+    print("[OK] Migrations complete.")
+

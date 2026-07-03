@@ -5,7 +5,7 @@ from typing import Optional, List
 from dotenv import load_dotenv
 import os
 
-from database import get_db, init_db
+from database import get_db, init_db, run_migrations
 from models import Bike, Dealer, Booking
 
 load_dotenv()
@@ -25,8 +25,9 @@ app = FastAPI(
 
 @app.on_event("startup")
 def on_startup():
-    """Initialize database tables on app startup."""
+    """Initialize database tables and run migrations on startup."""
     init_db()
+    run_migrations()
 
 
 # ─────────────────────────────────────────────

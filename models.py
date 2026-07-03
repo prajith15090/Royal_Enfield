@@ -74,7 +74,7 @@ class Booking(Base):
     variant          = Column(String(100), nullable=True)
     on_road_price    = Column(Float,       nullable=True)
     booking_amount   = Column(Float,       nullable=True)
-    finance_required = Column(String(10),  nullable=True)   # "Yes" / "No"
+    finance_required = Column(String(50),  nullable=True)   # "Yes" / "No"
 
     # ── Phase 2 : Finance ──────────────────────────────────────────────
     preferred_bank   = Column(String(100), nullable=True)
@@ -84,7 +84,7 @@ class Booking(Base):
     loan_status      = Column(String(50),  nullable=True)   # Approved / Rejected
 
     # ── Phase 3 : Vehicle Allocation ───────────────────────────────────
-    vehicle_available = Column(String(10),  nullable=True)  # "Yes" / "No"
+    vehicle_available = Column(String(50),  nullable=True)  # "Yes" / "No"
     chassis_number    = Column(String(100), nullable=True)
     engine_number     = Column(String(100), nullable=True)
 
