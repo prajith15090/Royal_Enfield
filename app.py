@@ -374,32 +374,27 @@ class ChatPayload(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
 
-from openai import OpenAI
+import google.generativeai as genai
 
-# Initialize OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Initialize Gemini client
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+# Using gemini-1.5-flash as it is fast and free
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 @app.post("/chat", response_model=ChatResponse, tags=["AI Assistant"])
 def chat_endpoint(payload: ChatPayload, db: Session = Depends(get_db)):
     """
     Receives a question from the Kissflow AI Assistant popup,
-    returns an answer using OpenAI, and logs the interaction to Neon DB.
+    returns an answer using Google Gemini, and logs the interaction to Neon DB.
     """
     try:
-        # Ask OpenAI for the answer
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a helpful and polite Royal Enfield customer support assistant. Answer questions clearly and concisely about motorcycles, prices, and test rides."},
-                {"role": "user", "content": payload.question}
-            ],
-            temperature=0.7,
-            max_tokens=150
-        )
-        reply = response.choices[0].message.content
+        # Give Gemini a system prompt and ask the question
+        prompt = f"You are a helpful and polite Royal Enfield customer support assistant. Answer questions clearly and concisely about motorcycles, prices, and test rides.\n\nUser Question: {payload.question}"
+        response = model.generate_content(prompt)
+        reply = response.text
     except Exception as e:
         reply = f"Error connecting to AI: {str(e)}"
-        print(f"OpenAI Error: {e}")
+        print(f"Gemini Error: {e}")
         
     # Save the chat to Neon DB
     chat_log = ChatHistory(question=payload.question, reply=reply)
