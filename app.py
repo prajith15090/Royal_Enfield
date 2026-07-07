@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import os
 
 from database import get_db, init_db, run_migrations
-from models import Bike, Dealer, Booking
+from models import Bike, Dealer, Booking, ChatHistory
 
 load_dotenv()
 
@@ -375,9 +375,10 @@ class ChatResponse(BaseModel):
     reply: str
 
 @app.post("/chat", response_model=ChatResponse, tags=["AI Assistant"])
-def chat_endpoint(payload: ChatPayload):
+def chat_endpoint(payload: ChatPayload, db: Session = Depends(get_db)):
     """
-    Receives a question from the Kissflow AI Assistant popup and returns an answer.
+    Receives a question from the Kissflow AI Assistant popup,
+    returns an answer, and logs the interaction to Neon DB.
     """
     q = payload.question.lower()
     
@@ -388,6 +389,11 @@ def chat_endpoint(payload: ChatPayload):
         reply = "The price depends on the exact model and your city. Please check the Bikes list for specific on-road prices!"
     else:
         reply = f"I am the Royal Enfield AI Assistant. You asked: '{payload.question}'. My brain is still being upgraded, but I will be able to answer complex questions soon!"
+        
+    # Save the chat to Neon DB
+    chat_log = ChatHistory(question=payload.question, reply=reply)
+    db.add(chat_log)
+    db.commit()
         
     return {"reply": reply}
 
