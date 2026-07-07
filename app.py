@@ -398,7 +398,7 @@ def chat_endpoint(payload: ChatPayload, db: Session = Depends(get_db)):
         )
         reply = response.choices[0].message.content
     except Exception as e:
-        reply = "I'm having trouble connecting to my AI brain right now. Please try again later!"
+        reply = f"Error connecting to AI: {str(e)}"
         print(f"OpenAI Error: {e}")
         
     # Save the chat to Neon DB
