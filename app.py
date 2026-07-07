@@ -408,6 +408,178 @@ def chat_endpoint(payload: ChatPayload, db: Session = Depends(get_db)):
         
     return {"reply": reply}
 
+from fastapi.responses import HTMLResponse
+
+@app.get("/bot", response_class=HTMLResponse, tags=["AI Assistant"])
+def chat_ui():
+    """
+    Serves a beautiful, standalone HTML Chatbot interface.
+    This can be embedded inside Kissflow using an iFrame/URL component.
+    """
+    html_content = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Royal Enfield AI Assistant</title>
+        <style>
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background-color: #121212;
+                color: #ffffff;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                height: 100vh;
+            }
+            .header {
+                background-color: #d62828;
+                padding: 15px;
+                text-align: center;
+                font-weight: bold;
+                font-size: 18px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            }
+            .chat-container {
+                flex-grow: 1;
+                padding: 20px;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+            .message {
+                max-width: 80%;
+                padding: 12px 16px;
+                border-radius: 20px;
+                line-height: 1.4;
+                font-size: 15px;
+            }
+            .user-msg {
+                align-self: flex-end;
+                background-color: #2b2b2b;
+                border-bottom-right-radius: 2px;
+            }
+            .bot-msg {
+                align-self: flex-start;
+                background-color: #d62828;
+                border-bottom-left-radius: 2px;
+            }
+            .input-area {
+                padding: 15px;
+                background-color: #1e1e1e;
+                display: flex;
+                gap: 10px;
+                border-top: 1px solid #333;
+            }
+            input[type="text"] {
+                flex-grow: 1;
+                padding: 12px;
+                border-radius: 25px;
+                border: 1px solid #444;
+                background-color: #2b2b2b;
+                color: white;
+                outline: none;
+                font-size: 15px;
+            }
+            input[type="text"]:focus {
+                border-color: #d62828;
+            }
+            button {
+                background-color: #d62828;
+                color: white;
+                border: none;
+                border-radius: 25px;
+                padding: 0 20px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: background-color 0.2s;
+            }
+            button:hover {
+                background-color: #b52222;
+            }
+            .loading {
+                font-style: italic;
+                color: #aaa;
+                font-size: 13px;
+                align-self: flex-start;
+                display: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            Royal Enfield AI Assistant
+        </div>
+        <div class="chat-container" id="chat-container">
+            <div class="message bot-msg">Hello! I am your Royal Enfield AI Assistant. How can I help you today?</div>
+        </div>
+        <div class="loading" id="loading">Thinking...</div>
+        <div class="input-area">
+            <input type="text" id="question" placeholder="Ask about bikes, prices, test rides..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+
+        <script>
+            async function sendMessage() {
+                const input = document.getElementById('question');
+                const chatContainer = document.getElementById('chat-container');
+                const loading = document.getElementById('loading');
+                const question = input.value.trim();
+
+                if (!question) return;
+
+                // Add user message to UI
+                const userDiv = document.createElement('div');
+                userDiv.className = 'message user-msg';
+                userDiv.textContent = question;
+                chatContainer.appendChild(userDiv);
+
+                input.value = '';
+                loading.style.display = 'block';
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                try {
+                    // Send to backend
+                    const response = await fetch('/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ question: question })
+                    });
+                    
+                    const data = await response.json();
+
+                    // Add bot message to UI
+                    const botDiv = document.createElement('div');
+                    botDiv.className = 'message bot-msg';
+                    botDiv.textContent = data.reply;
+                    chatContainer.appendChild(botDiv);
+
+                } catch (error) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'message bot-msg';
+                    errorDiv.textContent = "Sorry, I couldn't reach my brain. Please try again.";
+                    chatContainer.appendChild(errorDiv);
+                } finally {
+                    loading.style.display = 'none';
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+            }
+
+            function handleKeyPress(event) {
+                if (event.key === 'Enter') {
+                    sendMessage();
+                }
+            }
+        </script>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
 
 # ─────────────────────────────────────────────
 # Entry Point
