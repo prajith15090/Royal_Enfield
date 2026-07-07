@@ -378,8 +378,8 @@ import google.generativeai as genai
 
 # Initialize Gemini client
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-# Using gemini-1.5-flash-latest for best compatibility
-model = genai.GenerativeModel('gemini-1.5-flash-latest')
+# Using gemini-pro for maximum compatibility
+model = genai.GenerativeModel('gemini-pro')
 
 @app.post("/chat", response_model=ChatResponse, tags=["AI Assistant"])
 def chat_endpoint(payload: ChatPayload, db: Session = Depends(get_db)):
