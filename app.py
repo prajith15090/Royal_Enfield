@@ -447,10 +447,11 @@ def chat_ui():
             }
             .message {
                 max-width: 80%;
-                padding: 12px 16px;
+                padding: 15px 20px;
                 border-radius: 20px;
-                line-height: 1.4;
+                line-height: 1.6;
                 font-size: 15px;
+                white-space: pre-wrap;
             }
             .user-msg {
                 align-self: flex-end;
@@ -548,10 +549,15 @@ def chat_ui():
                     
                     const data = await response.json();
 
+                    // Convert basic markdown to HTML
+                    let formattedReply = data.reply
+                        .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                        .replace(/\*(.*?)\*/g, '<i>$1</i>');
+
                     // Add bot message to UI
                     const botDiv = document.createElement('div');
                     botDiv.className = 'message bot-msg';
-                    botDiv.textContent = data.reply;
+                    botDiv.innerHTML = formattedReply;
                     chatContainer.appendChild(botDiv);
 
                 } catch (error) {
