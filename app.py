@@ -374,21 +374,32 @@ class ChatPayload(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
 
+from openai import OpenAI
+
+# Initialize OpenAI client
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 @app.post("/chat", response_model=ChatResponse, tags=["AI Assistant"])
 def chat_endpoint(payload: ChatPayload, db: Session = Depends(get_db)):
     """
     Receives a question from the Kissflow AI Assistant popup,
-    returns an answer, and logs the interaction to Neon DB.
+    returns an answer using OpenAI, and logs the interaction to Neon DB.
     """
-    q = payload.question.lower()
-    
-    # Simple logic for now (you can connect this to OpenAI later!)
-    if "test ride" in q or "book" in q:
-        reply = "You can book a test ride directly through our Kissflow portal! Just navigate to the booking section."
-    elif "price" in q or "cost" in q:
-        reply = "The price depends on the exact model and your city. Please check the Bikes list for specific on-road prices!"
-    else:
-        reply = f"I am the Royal Enfield AI Assistant. You asked: '{payload.question}'. My brain is still being upgraded, but I will be able to answer complex questions soon!"
+    try:
+        # Ask OpenAI for the answer
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a helpful and polite Royal Enfield customer support assistant. Answer questions clearly and concisely about motorcycles, prices, and test rides."},
+                {"role": "user", "content": payload.question}
+            ],
+            temperature=0.7,
+            max_tokens=150
+        )
+        reply = response.choices[0].message.content
+    except Exception as e:
+        reply = "I'm having trouble connecting to my AI brain right now. Please try again later!"
+        print(f"OpenAI Error: {e}")
         
     # Save the chat to Neon DB
     chat_log = ChatHistory(question=payload.question, reply=reply)
