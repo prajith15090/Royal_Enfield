@@ -366,6 +366,33 @@ def delete_dealer(dealer_id: int, db: Session = Depends(get_db)):
 
 
 # ─────────────────────────────────────────────
+# AI Assistant Endpoint (Kissflow Chatbot)
+# ─────────────────────────────────────────────
+class ChatPayload(BaseModel):
+    question: str
+
+class ChatResponse(BaseModel):
+    reply: str
+
+@app.post("/chat", response_model=ChatResponse, tags=["AI Assistant"])
+def chat_endpoint(payload: ChatPayload):
+    """
+    Receives a question from the Kissflow AI Assistant popup and returns an answer.
+    """
+    q = payload.question.lower()
+    
+    # Simple logic for now (you can connect this to OpenAI later!)
+    if "test ride" in q or "book" in q:
+        reply = "You can book a test ride directly through our Kissflow portal! Just navigate to the booking section."
+    elif "price" in q or "cost" in q:
+        reply = "The price depends on the exact model and your city. Please check the Bikes list for specific on-road prices!"
+    else:
+        reply = f"I am the Royal Enfield AI Assistant. You asked: '{payload.question}'. My brain is still being upgraded, but I will be able to answer complex questions soon!"
+        
+    return {"reply": reply}
+
+
+# ─────────────────────────────────────────────
 # Entry Point
 # ─────────────────────────────────────────────
 if __name__ == "__main__":
