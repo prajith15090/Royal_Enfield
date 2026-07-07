@@ -582,6 +582,104 @@ def chat_ui():
     """
     return HTMLResponse(content=html_content)
 
+@app.get("/ar", response_class=HTMLResponse, tags=["AR Viewer"])
+def ar_ui():
+    """
+    Serves an Augmented Reality (AR) 3D Viewer page.
+    This uses Google's <model-viewer> component.
+    """
+    ar_html = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Royal Enfield 3D Viewer</title>
+        <!-- Import the model-viewer component -->
+        <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                background-color: #f5f5f5;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+            }
+            .header {
+                background-color: #d62828;
+                color: white;
+                padding: 15px;
+                text-align: center;
+                font-weight: bold;
+                font-size: 18px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+                z-index: 10;
+            }
+            model-viewer {
+                width: 100%;
+                flex-grow: 1;
+                background-color: #ffffff;
+                --poster-color: transparent;
+            }
+            /* Customizing the AR button */
+            .ar-button {
+                background-color: #d62828;
+                border-radius: 4px;
+                border: none;
+                position: absolute;
+                bottom: 20px;
+                right: 20px;
+                color: white;
+                padding: 12px 24px;
+                font-family: inherit;
+                font-size: 14px;
+                font-weight: bold;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+                cursor: pointer;
+            }
+            .ar-button:hover {
+                background-color: #b52222;
+            }
+            .instructions {
+                position: absolute;
+                bottom: 20px;
+                left: 20px;
+                background: rgba(0,0,0,0.7);
+                color: white;
+                padding: 10px;
+                border-radius: 8px;
+                font-size: 12px;
+                pointer-events: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            Royal Enfield 3D Viewer (Demo)
+        </div>
+        
+        <!-- Replace the src URL with a Royal Enfield .glb file when you have one -->
+        <model-viewer 
+            src="https://modelviewer.dev/shared-assets/models/Astronaut.glb" 
+            ios-src="https://modelviewer.dev/shared-assets/models/Astronaut.usdz"
+            alt="A 3D model of a Royal Enfield" 
+            shadow-intensity="1" 
+            camera-controls 
+            auto-rotate 
+            ar>
+            
+            <button slot="ar-button" class="ar-button">
+                View in your space (AR)
+            </button>
+            <div class="instructions">Drag to rotate. Scroll to zoom.</div>
+        </model-viewer>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=ar_html)
+
 # ─────────────────────────────────────────────
 # Entry Point
 # ─────────────────────────────────────────────
